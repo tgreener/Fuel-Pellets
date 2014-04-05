@@ -6,3 +6,8 @@ SceneManager = Object:extend({
 	currentScene = MainMenuScene:new()
 })
 
+function SceneManager:setScene(scene)
+	self.currentScene = scene
+	self.currentScene:enter()	
+end
+

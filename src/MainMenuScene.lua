@@ -16,3 +16,9 @@ function MainMenuScene:draw()
 	love.graphics.printf("Fuel Pellets", 0, (height / 3) - 55, width, "center")
 end
 
+function MainMenuScene:keyReleased(key)
+	if key == " " then
+		sceneManager:setScene(GameScene:new())
+	end	
+end
+

@@ -17,3 +17,12 @@ end
 function Scene:draw()
 	self.timedText:printAll()
 end
+
+function Scene:keyPressed(key, repeats)
+end
+
+function Scene:keyReleased(key)	
+end
+
+function Scene:enter()
+end
