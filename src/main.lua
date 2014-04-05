@@ -1,7 +1,4 @@
-run = love.filesystem.load("runLoop.lua")
-
-run()
-
+love.filesystem.load("runLoop.lua")()
 
 function startGame()
 	score = 0
@@ -16,20 +13,19 @@ function startGame()
 	
 	theDot.r = 0
 	
-	snakeHead = snakeObj:new()
+	player = Player:new()
 end
 
 function love.load()
 	love.window.setTitle("Fuel Pellets")
 	width, height = love.window.getDimensions()
+	
+	love.filesystem.load("collisionMath.lua")()
+	love.filesystem.load("Player.lua")()
+	love.filesystem.load("TimedText.lua")()
+	timedText = TimedText:new()
+	
 	showStart = true
-	
-	collisions = love.filesystem.load("collisionMath.lua")
-	snake = love.filesystem.load("snakeObj.lua")
-	love.filesystem.load("timedText.lua")()
-	
-	collisions()
-	snake()
 	
 	fuelColor = {r = 50, g = 255, b = 50, a = 255}
 	scoreColor = {r = 255, g = 255, b = 50, a = 255}
@@ -62,24 +58,24 @@ end
 
 function love.update(dt)
 	if not gameOver and not paused and not showStart then
-		snakeHead:update(dt)
+		player:update(dt)
 		timedText:update(dt)
 		
 		score = score + dt
 		comboTimer = comboTimer - dt
 	
-		if snakeHead:collidesWith(theDot) then
+		if player:collidesWith(theDot) then
 			comboTimer = comboTimerMax
 			comboCounter = comboCounter + 1
 			
-			snakeHead:addFuel(theDot.fuelBonus + comboCounter)
+			player:addFuel(theDot.fuelBonus + comboCounter)
 			timedText:add("+" .. (theDot.fuelBonus + comboCounter), 
-			   			  snakeHead.x + 10, snakeHead.y, 0.4,
+			   			  player.x + 10, player.y, 0.4,
 						  fuelColor)
 			
 			score = score + (5 * comboCounter)
 			timedText:add("+" .. (5 * comboCounter), 
-						  snakeHead.x + 10, snakeHead.y + 15, 0.4, 
+						  player.x + 10, player.y + 15, 0.4, 
 						  scoreColor)
 
 			theDot:randomLocation()
@@ -93,7 +89,7 @@ function love.update(dt)
 			theDot:randomLocation()
 		end
 	
-		if math.ceil(snakeHead.fuel) == 0 then
+		if math.ceil(player.fuel) == 0 then
 			gameOver = true
 		end
 	end
@@ -105,7 +101,7 @@ function drawThrottle()
 	local throttleSteps = 10
 	
 	love.graphics.setColor(255, 50, 50, 255)
-	love.graphics.rectangle("fill", 12, throttleBot, 8, (throttleHeight - throttleBot) * (snakeHead.throttle / throttleSteps))
+	love.graphics.rectangle("fill", 12, throttleBot, 8, (throttleHeight - throttleBot) * (player.throttle / throttleSteps))
 
 	love.graphics.setColor(255, 255, 255, 255)	
 	for i = 0, throttleSteps, 1 do
@@ -116,9 +112,9 @@ end
 function love.draw()
 	if not showStart then
 		local r, g, b, a = love.graphics.getColor()
-		local l = snakeHead.sideLength
-		local halfL = snakeHead.sideLength / 2
-		love.graphics.rectangle("fill", snakeHead.x - halfL, snakeHead.y - halfL, l, l)
+		local l = player.sideLength
+		local halfL = player.sideLength / 2
+		love.graphics.rectangle("fill", player.x - halfL, player.y - halfL, l, l)
 		love.graphics.circle("fill", theDot.x, theDot.y, theDot.r, 15)
 		drawThrottle()
 		timedText:printAll()
@@ -127,7 +123,7 @@ function love.draw()
 		love.graphics.printf("Score: " .. math.floor(score), 0, 10, width, "right")
 		
 		love.graphics.setColor(fuelColor.r, fuelColor.g, fuelColor.b, fuelColor.a)
-		love.graphics.printf("Fuel: " .. math.ceil(snakeHead.fuel), 0, 10, width, "center")
+		love.graphics.printf("Fuel: " .. math.ceil(player.fuel), 0, 10, width, "center")
 		
 		love.graphics.setColor(r, g, b, a)
 		love.graphics.print("Combo: " .. comboCounter, 10, 10)
@@ -166,13 +162,13 @@ function love.keypressed(key)
 		end
 		
 		if key == "up" then
-			snakeHead.yBurn = snakeHead.yBurn - 1
+			player.yBurn = player.yBurn - 1
 		elseif key == "down" then
-			snakeHead.yBurn = snakeHead.yBurn + 1
+			player.yBurn = player.yBurn + 1
 		elseif key == "left" then
-			snakeHead.xBurn = snakeHead.xBurn - 1
+			player.xBurn = player.xBurn - 1
 		elseif key == "right" then
-			snakeHead.xBurn = snakeHead.xBurn + 1
+			player.xBurn = player.xBurn + 1
 		elseif key == " " then
 			paused = not paused
 		end
@@ -182,35 +178,35 @@ end
 function love.keyreleased(key)
 	if not showStart and not gameOver then
 		if key == "up" then
-			snakeHead.yBurn = snakeHead.yBurn + 1
+			player.yBurn = player.yBurn + 1
 		elseif key == "down" then
-			snakeHead.yBurn = snakeHead.yBurn - 1
+			player.yBurn = player.yBurn - 1
 		elseif key == "left" then
-			snakeHead.xBurn = snakeHead.xBurn + 1
+			player.xBurn = player.xBurn + 1
 		elseif key == "right" then
-			snakeHead.xBurn = snakeHead.xBurn - 1
+			player.xBurn = player.xBurn - 1
 		end
 	
 		if key == "1" then
-			snakeHead.throttle = 1
+			player.throttle = 1
 		elseif key == "2" then
-			snakeHead.throttle = 2
+			player.throttle = 2
 		elseif key == "3" then
-			snakeHead.throttle = 3
+			player.throttle = 3
 		elseif key == "4" then
-			snakeHead.throttle = 4
+			player.throttle = 4
 		elseif key == "5" then
-			snakeHead.throttle = 5
+			player.throttle = 5
 		elseif key == "6" then
-			snakeHead.throttle = 6
+			player.throttle = 6
 		elseif key == "7" then
-			snakeHead.throttle = 7
+			player.throttle = 7
 		elseif key == "8" then
-			snakeHead.throttle = 8
+			player.throttle = 8
 		elseif key == "9" then
-			snakeHead.throttle = 9
+			player.throttle = 9
 		elseif key == "0" then
-			snakeHead.throttle = 10
+			player.throttle = 10
 		end
 	end
 end

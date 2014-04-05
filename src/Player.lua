@@ -1,23 +1,9 @@
 love.filesystem.load("collisionMath.lua")()
+love.filesystem.load("Object.lua")()
 
-function deepcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[deepcopy(orig_key)] = deepcopy(orig_value)
-        end
-        setmetatable(copy, deepcopy(getmetatable(orig)))
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
+local previousObj = {}
 
-previousObj = {}
-
-snakeObj = {
+Player = Object:extend({
 	x = width / 2,
 	y = height / 2,
 	
@@ -36,17 +22,9 @@ snakeObj = {
 	yBurn = 0,
 	burnRate = 1,
 	depletionRate = 5
-}
-	
-function snakeObj:new()
-	local obj = {}
-	setmetatable(obj, {__index = self})
-	__index = self
-		
-	return obj
-end
+})
 
-function snakeObj:updatePhys(dt)
+function Player:updatePhys(dt)
 	self.ax = self.xBurn * (self.thrust * self.throttle)
 	self.ay = self.yBurn * (self.thrust * self.throttle)
 	
@@ -75,24 +53,24 @@ function snakeObj:updatePhys(dt)
 	self.y = (self.y + (self.vy * dt)) % height
 end
 
-function snakeObj:update(dt)
+function Player:update(dt)
 	previousObj = deepcopy(self)
 	self:updatePhys(dt)
 end
 
-function snakeObj:burnFuel(dt)
+function Player:burnFuel(dt)
 	self.fuel = self.fuel - ((self.burnRate * self.throttle) * dt)
 end
 
-function snakeObj:depleteFuel(dt)
+function Player:depleteFuel(dt)
 	self.fuel = self.fuel - (self.depletionRate * dt)
 end
 
-function snakeObj:addFuel(amount)
+function Player:addFuel(amount)
 	self.fuel = self.fuel + amount
 end
 
-function snakeObj:collidesWith(aDot)
+function Player:collidesWith(aDot)
 	local r = sqr(aDot.r)
 	
 	local corners = self:getCorners()
@@ -123,7 +101,7 @@ function snakeObj:collidesWith(aDot)
 	return collidesTop or collidesRight or collidesBottom or collidesLeft
 end
 
-function snakeObj:getCorners()
+function Player:getCorners()
 	local corners = {}
 	corners[0] = {
 		x = self.x - (self.sideLength / 2),
