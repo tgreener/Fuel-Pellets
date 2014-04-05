@@ -166,37 +166,37 @@ function GameScene:keyPressed(key, repeats)
 end
 
 function GameScene:keyReleased(key)	
-	if not gameOver then
-		if key == "up" then
-			player.yBurn = player.yBurn + 1
-		elseif key == "down" then
-			player.yBurn = player.yBurn - 1
-		elseif key == "left" then
-			player.xBurn = player.xBurn + 1
-		elseif key == "right" then
-			player.xBurn = player.xBurn - 1
-		end
+	if gameOver then return end
+	
+	if key == "up" then
+		player.yBurn = player.yBurn + 1
+	elseif key == "down" then
+		player.yBurn = player.yBurn - 1
+	elseif key == "left" then
+		player.xBurn = player.xBurn + 1
+	elseif key == "right" then
+		player.xBurn = player.xBurn - 1
+	end
 
-		if key == "1" then
-			player.throttle = 1
-		elseif key == "2" then
-			player.throttle = 2
-		elseif key == "3" then
-			player.throttle = 3
-		elseif key == "4" then
-			player.throttle = 4
-		elseif key == "5" then
-			player.throttle = 5
-		elseif key == "6" then
-			player.throttle = 6
-		elseif key == "7" then
-			player.throttle = 7
-		elseif key == "8" then
-			player.throttle = 8
-		elseif key == "9" then
-			player.throttle = 9
-		elseif key == "0" then
-			player.throttle = 10
-		end
+	if key == "1" then
+		player.throttle = 1
+	elseif key == "2" then
+		player.throttle = 2
+	elseif key == "3" then
+		player.throttle = 3
+	elseif key == "4" then
+		player.throttle = 4
+	elseif key == "5" then
+		player.throttle = 5
+	elseif key == "6" then
+		player.throttle = 6
+	elseif key == "7" then
+		player.throttle = 7
+	elseif key == "8" then
+		player.throttle = 8
+	elseif key == "9" then
+		player.throttle = 9
+	elseif key == "0" then
+		player.throttle = 10
 	end
 end
