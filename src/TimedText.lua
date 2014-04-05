@@ -1,11 +1,11 @@
 
-timedText = {}
+TimedText = Object:extend({})
 
-function timedText:add(text, x, y, time, color)
+function TimedText:add(text, x, y, time, color)
 	table.insert(self, {text = text, x = x, y = y, time = time, color = color})
 end
 
-function timedText:update(dt)
+function TimedText:update(dt)
 	for index, text in ipairs(self) do
 		text.time = text.time - dt
 		
@@ -15,7 +15,7 @@ function timedText:update(dt)
 	end
 end
 
-function timedText:printAll()
+function TimedText:printAll()
 	for i, t in ipairs(self) do
 		local r, g, b, a = love.graphics.getColor()
 		
