@@ -1,4 +1,4 @@
-love.filesystem.load("runLoop.lua")()
+love.filesystem.load("RunLoop.lua")()
 
 function startGame()
 	score = 0
@@ -16,19 +16,19 @@ function startGame()
 	player = Player:new()
 end
 
+local currentScene
+
 function love.load()
 	love.window.setTitle("Fuel Pellets")
 	width, height = love.window.getDimensions()
 	
-	love.filesystem.load("collisionMath.lua")()
+	love.filesystem.load("CollisionMath.lua")()
 	love.filesystem.load("Player.lua")()
 	love.filesystem.load("TimedText.lua")()
-	timedText = TimedText:new()
+	love.filesystem.load("SceneManager.lua")()
+	sceneManager = SceneManager:new()
 	
 	showStart = true
-	
-	fuelColor = {r = 50, g = 255, b = 50, a = 255}
-	scoreColor = {r = 255, g = 255, b = 50, a = 255}
 	
 	theDot = {
 		x = 0,
@@ -59,7 +59,7 @@ end
 function love.update(dt)
 	if not gameOver and not paused and not showStart then
 		player:update(dt)
-		timedText:update(dt)
+		sceneManager.currentScene:update(dt)
 		
 		score = score + dt
 		comboTimer = comboTimer - dt
@@ -69,14 +69,10 @@ function love.update(dt)
 			comboCounter = comboCounter + 1
 			
 			player:addFuel(theDot.fuelBonus + comboCounter)
-			timedText:add("+" .. (theDot.fuelBonus + comboCounter), 
-			   			  player.x + 10, player.y, 0.4,
-						  fuelColor)
+			sceneManager.currentScene:setFuelGained("+" .. (theDot.fuelBonus + comboCounter), player.x + 10, player.y)
 			
 			score = score + (5 * comboCounter)
-			timedText:add("+" .. (5 * comboCounter), 
-						  player.x + 10, player.y + 15, 0.4, 
-						  scoreColor)
+			sceneManager.currentScene:setScoreGained("+" .. (5 * comboCounter), player.x + 10, player.y + 15)
 
 			theDot:randomLocation()
 		end
@@ -95,65 +91,15 @@ function love.update(dt)
 	end
 end
 
-function drawThrottle()
-	local throttleBot = height / 4
-	local throttleHeight = 30
-	local throttleSteps = 10
-	
-	love.graphics.setColor(255, 50, 50, 255)
-	love.graphics.rectangle("fill", 12, throttleBot, 8, (throttleHeight - throttleBot) * (player.throttle / throttleSteps))
-
-	love.graphics.setColor(255, 255, 255, 255)	
-	for i = 0, throttleSteps, 1 do
-		love.graphics.rectangle("fill", 10, throttleBot - i * ((throttleBot - throttleHeight) / throttleSteps), 12, 1)
-	end
-end
-
 function love.draw()
-	if not showStart then
-		local r, g, b, a = love.graphics.getColor()
-		local l = player.sideLength
-		local halfL = player.sideLength / 2
-		love.graphics.rectangle("fill", player.x - halfL, player.y - halfL, l, l)
-		love.graphics.circle("fill", theDot.x, theDot.y, theDot.r, 15)
-		drawThrottle()
-		timedText:printAll()
-	
-		love.graphics.setColor(scoreColor.r, scoreColor.g, scoreColor.b, scoreColor.a)
-		love.graphics.printf("Score: " .. math.floor(score), 0, 10, width, "right")
-		
-		love.graphics.setColor(fuelColor.r, fuelColor.g, fuelColor.b, fuelColor.a)
-		love.graphics.printf("Fuel: " .. math.ceil(player.fuel), 0, 10, width, "center")
-		
-		love.graphics.setColor(r, g, b, a)
-		love.graphics.print("Combo: " .. comboCounter, 10, 10)
-		
-		love.graphics.rectangle("fill", 10, height - 15, (width - 10) * (comboTimer / comboTimerMax), 10)
-	
-		if paused then
-			love.graphics.printf("Paused\nPress space to continue", 0, (height / 2) - 50, width, "center")
-		end
-	
-		if gameOver then
-			love.graphics.printf("Game Over\nPress space to restart", 0, (height / 2) - 50, width, "center")
-		end
-		
-	else
-		instructions = "Instructions:\n"
-		instructions = instructions .. "\nCollect Fuel Pellets\n"
-		instructions = instructions .. "\nUse arrow keys to fire thrusters\n"
-		instructions = instructions .. "\nUse number keys to set your throttle\n"
-		instructions = instructions .. "\nPress space to start\n"
-		
-		love.graphics.printf(instructions, 0, height / 3, width, "center")
-		love.graphics.printf("Fuel Pellets", 0, (height / 3) - 55, width, "center")
-	end
+	sceneManager.currentScene:draw()
 end
 
 function love.keypressed(key)
 	if showStart then
 		if key == " " then
 			showStart = false
+			sceneManager.currentScene = GameScene:new()
 		end
 	else
 		if gameOver and key == " " then
