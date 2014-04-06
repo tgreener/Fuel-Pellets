@@ -16,6 +16,9 @@ local comboTimerMax = 4.3
 local comboTimer = comboTimerMax
 local comboCounter = 0
 
+local burnAnimationDuration = 0.2
+local burnAnimationTime = 0
+
 local theDot = {
 	x = 0,
 	y = 0,
@@ -69,6 +72,22 @@ local function drawThrottle()
 	end
 end
 
+local function drawThrusters()
+	if paused then return end
+	
+	if burnAnimationTime < burnAnimationDuration / 2 then
+		if player.yBurn ~= 0 then
+			love.graphics.rectangle("fill", player.x, player.y + (player.yBurn * player.sideLength * -1), 1, (player.throttle * player.yBurn) * -1)
+		end
+	
+		if player.xBurn ~= 0 then
+			love.graphics.rectangle("fill", player.x + (player.xBurn * player.sideLength * -1), player.y, (player.throttle * player.xBurn) * -1, 1)
+		end
+	elseif burnAnimationTime > burnAnimationDuration then
+		burnAnimationTime = 0	
+	end
+end
+
 function GameScene:setFuelGained(text, x, y)
 	self:addTimedText(text, x, y, timedTextTime, fuelColor)
 end
@@ -89,6 +108,7 @@ function GameScene:update(dt)
 	
 	score = score + dt
 	comboTimer = comboTimer - dt
+	burnAnimationTime = burnAnimationTime + dt
 
 	if player:collidesWith(theDot) then
 		comboTimer = comboTimerMax
@@ -123,6 +143,7 @@ function GameScene:draw()
 	local l = player.sideLength
 	local halfL = player.sideLength / 2
 	love.graphics.rectangle("fill", player.x - halfL, player.y - halfL, l, l)
+	drawThrusters()
 	love.graphics.circle("fill", theDot.x, theDot.y, theDot.r, 15)
 	drawThrottle()
 
