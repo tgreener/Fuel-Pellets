@@ -1,4 +1,4 @@
-love.filesystem.load("collisionMath.lua")()
+love.filesystem.load("CollisionMath.lua")()
 love.filesystem.load("Object.lua")()
 
 local previousObj = {}

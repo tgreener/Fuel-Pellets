@@ -115,10 +115,10 @@ function GameScene:update(dt)
 		comboCounter = comboCounter + 1
 		
 		player:addFuel(theDot.fuelBonus + comboCounter)
-		sceneManager.currentScene:setFuelGained("+" .. (theDot.fuelBonus + comboCounter), player.x + 10, player.y)
+		self:setFuelGained("+" .. (theDot.fuelBonus + comboCounter), player.x + 10, player.y)
 		
 		score = score + (5 * comboCounter)
-		sceneManager.currentScene:setScoreGained("+" .. (5 * comboCounter), player.x + 10, player.y + 15)
+		self:setScoreGained("+" .. (5 * comboCounter), player.x + 10, player.y + 15)
 
 		theDot:randomLocation()
 	end
