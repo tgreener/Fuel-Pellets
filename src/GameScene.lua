@@ -1,5 +1,6 @@
 love.filesystem.load("Scene.lua")()
 love.filesystem.load("Player.lua")()
+love.filesystem.load("SpaceObject.lua")()
 
 GameScene = Scene:extend({
 })
@@ -19,28 +20,7 @@ local comboCounter = 0
 local burnAnimationDuration = 0.2
 local burnAnimationTime = 0
 
-local theDot = {
-	x = 0,
-	y = 0,
-	r = 0,
-	
-	rMin = 3,
-	rMax = 20,
-	rScaler = 500,
-	
-	fuelBonus = 30
-}
-
-function theDot:randomLocation()
-	self.x = math.random() * width
-	self.y = (math.random() * (height - (15 + self.r))) + self.r
-end
-
-function theDot:scaleSizeToScore(s)
-	local rOffset = self.rMax - self.rMin
-	
-	self.r = ((rOffset * self.rScaler) / (s + self.rScaler)) + self.rMin
-end
+local theDot = SpaceObject:new()
 
 local function startGame()
 	score = 0
@@ -103,11 +83,14 @@ end
 function GameScene:update(dt)
 	if paused or gameOver then return end
 	
+	player:onStartUpdate()
+	
 	self.timedText:update(dt)
+	theDot:applyGravitation(player)
 	player:update(dt)
 	
 	score = score + dt
-	comboTimer = comboTimer - dt
+	-- comboTimer = comboTimer - dt
 	burnAnimationTime = burnAnimationTime + dt
 
 	if player:collidesWith(theDot) then
@@ -174,13 +157,13 @@ function GameScene:keyPressed(key, repeats)
 	end
 	
 	if key == "up" then
-		player.yBurn = player.yBurn - 1
+		player:fireBottomThruster()
 	elseif key == "down" then
-		player.yBurn = player.yBurn + 1
+		player:burnY(1)
 	elseif key == "left" then
-		player.xBurn = player.xBurn - 1
+		player:burnX(-1)
 	elseif key == "right" then
-		player.xBurn = player.xBurn + 1
+		player:burnX(1)
 	elseif key == " " then
 		paused = not paused
 	end
@@ -190,13 +173,13 @@ function GameScene:keyReleased(key)
 	if gameOver then return end
 	
 	if key == "up" then
-		player.yBurn = player.yBurn + 1
+		player:stopBottomThruster();
 	elseif key == "down" then
-		player.yBurn = player.yBurn - 1
+		player:burnY(-1)
 	elseif key == "left" then
-		player.xBurn = player.xBurn + 1
+		player:burnX(1)
 	elseif key == "right" then
-		player.xBurn = player.xBurn - 1
+		player:burnX(-1)
 	end
 
 	if key == "1" then

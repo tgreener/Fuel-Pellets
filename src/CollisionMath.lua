@@ -7,6 +7,14 @@ function dist2(a, b)
 	return sqr(a.x - b.x) + sqr(a.y - b.y)
 end
 
+function dist(a, b)
+	return math.sqrt(dist2(a, b))
+end
+
+function vector2Length(a, b)
+	return math.sqrt(sqr(a) + sqr(b))
+end
+
 function distToSegment2(p, a, b)
 	local lengthSqr = dist2(a, b)
 	

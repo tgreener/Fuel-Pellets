@@ -21,12 +21,66 @@ Player = Object:extend({
 	xBurn = 0,
 	yBurn = 0,
 	burnRate = 1,
-	depletionRate = 5
+	depletionRate = 5,
+	
+	mass = 1
 })
 
+function Player:addBurnAcceleration()
+	local totalThrust = self.thrust * self.throttle
+	local vecX = self.xBurn * totalThrust
+	local vecY = self.yBurn * totalThrust
+	
+ 	self:addVector(vecX, vecY)
+end
+
+function Player:burnY(yDir)
+	self.yBurn = self.yBurn + yDir
+end
+
+function Player:burnX(xDir)
+	self.xBurn = self.xBurn + xDir
+end
+
+function Player:fireTopThruster()
+	self:burnY(1)
+end
+
+function Player:stopTopThruster()
+	self:fireBottomThruster()
+end
+
+function Player:fireBottomThruster() 
+	self:burnY(-1)
+end
+
+function Player:stopBottomThruster()
+	self:fireTopThruster()
+end
+
+function Player:fireRightThruster()
+	self:burnX(-1)
+end
+
+function Player:stopRightThruster()
+	self:fireLeftThruster()
+end
+
+function Player:fireLeftThruster()
+	self:burnX(1)
+end
+
+function Player:stopLeftThruster()
+	self:fireRightThruster()
+end
+
+function Player:addVector(ax, ay)
+	self.ax = self.ax + ax
+	self.ay = self.ay + ay
+end
+
 function Player:updatePhys(dt)
-	self.ax = self.xBurn * (self.thrust * self.throttle)
-	self.ay = self.yBurn * (self.thrust * self.throttle)
+	self:addBurnAcceleration()
 	
 	self:depleteFuel(dt)
 	
@@ -49,8 +103,13 @@ function Player:updatePhys(dt)
 		self.vy = self.maxV
 	end
 	
-	self.x = (self.x + (self.vx * dt)) % width
-	self.y = (self.y + (self.vy * dt)) % height
+	self.x = (self.x + (self.vx * dt))-- % width
+	self.y = (self.y + (self.vy * dt))-- % height
+end
+
+function Player:onStartUpdate()
+	self.ax = 0
+	self.ay = 0
 end
 
 function Player:update(dt)
@@ -59,11 +118,11 @@ function Player:update(dt)
 end
 
 function Player:burnFuel(dt)
-	self.fuel = self.fuel - ((self.burnRate * self.throttle) * dt)
+	-- self.fuel = self.fuel - ((self.burnRate * self.throttle) * dt)
 end
 
 function Player:depleteFuel(dt)
-	self.fuel = self.fuel - (self.depletionRate * dt)
+	-- self.fuel = self.fuel - (self.depletionRate * dt)
 end
 
 function Player:addFuel(amount)
@@ -88,10 +147,10 @@ function Player:collidesWith(aDot)
 	local distToLeft = distToSegment2(aDot, corners[0], corners[3])
 	local predDistToLeft = distToSegment2(aDot, predictedCorners[0], predictedCorners[3])
 	
-	local topT = (r - distToTop) / (predDistToTop - distToTop)
 	local rightT = (r - distToRight) / (predDistToRight - distToRight)
 	local bottomT = (r - distToBot) / (predDistToBot - distToBot)
 	local leftT = (r - distToLeft) / (predDistToLeft - distToLeft)
+	local topT  = (r - distToTop) / (predDistToTop - distToTop)
 	
 	local collidesTop = topT < 1 and topT > 0
 	local collidesRight = rightT < 1 and rightT > 0
