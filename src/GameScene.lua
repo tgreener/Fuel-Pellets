@@ -7,6 +7,7 @@ GameScene = Scene:extend({
 
 local fuelColor = {r = 50, g = 255, b = 50, a = 255}
 local scoreColor = {r = 255, g = 255, b = 50, a = 255}
+local laserColor = {r = 255, g = 50, b = 50, a = 255}
 local timedTextTime = 0.4
 
 local player = 0
@@ -31,11 +32,11 @@ local function startGame()
 	comboTimer = comboTimerMax
 	comboCounter = 0
 	
+	theDot = SpaceObject:new()
 	theDot:randomLocation()
 	
-	theDot.r = 0
-	
 	player = Player:new()
+	player:setTarget(theDot)
 end
 
 local function drawThrottle()
@@ -87,36 +88,19 @@ function GameScene:update(dt)
 	
 	self.timedText:update(dt)
 	theDot:applyGravitation(player)
+	player:applyGravitation(theDot)
+	
 	player:update(dt)
+	theDot:updatePhys(dt)
 	
 	score = score + dt
-	-- comboTimer = comboTimer - dt
 	burnAnimationTime = burnAnimationTime + dt
+	
+	player:onEndUpdate()
 
-	if player:collidesWith(theDot) then
-		comboTimer = comboTimerMax
-		comboCounter = comboCounter + 1
-		
-		player:addFuel(theDot.fuelBonus + comboCounter)
-		self:setFuelGained("+" .. (theDot.fuelBonus + comboCounter), player.x + 10, player.y)
-		
-		score = score + (5 * comboCounter)
-		self:setScoreGained("+" .. (5 * comboCounter), player.x + 10, player.y + 15)
-
-		theDot:randomLocation()
-	end
-
-	theDot:scaleSizeToScore(score)
-
-	if math.ceil(comboTimer) <= 0 then
-		comboCounter = 0
-		comboTimer = comboTimerMax
-		theDot:randomLocation()
-	end
-
-	if math.ceil(player.fuel) == 0 then
+	if player:collidesWith(theDot) or math.ceil(player.fuel) == 0 then
 		gameOver = true
-	end	
+	end
 end
 
 function GameScene:draw()
@@ -125,10 +109,18 @@ function GameScene:draw()
 	local r, g, b, a = love.graphics.getColor()
 	local l = player.sideLength
 	local halfL = player.sideLength / 2
-	love.graphics.rectangle("fill", player.x - halfL, player.y - halfL, l, l)
-	drawThrusters()
+	
 	love.graphics.circle("fill", theDot.x, theDot.y, theDot.r, 15)
 	drawThrottle()
+	
+	if player.laser.firing then
+		love.graphics.setColor(laserColor.r, laserColor.g, laserColor.b, laserColor.a)
+		love.graphics.line(player.x, player.y, player.laser.target.x, player.laser.target.y)
+		love.graphics.setColor(r,g,b,a)
+	end
+	
+	love.graphics.rectangle("fill", player.x - halfL, player.y - halfL, l, l)
+	drawThrusters()
 
 	love.graphics.setColor(scoreColor.r, scoreColor.g, scoreColor.b, scoreColor.a)
 	love.graphics.printf("Score: " .. math.floor(score), 0, 10, width, "right")
@@ -159,11 +151,11 @@ function GameScene:keyPressed(key, repeats)
 	if key == "up" then
 		player:fireBottomThruster()
 	elseif key == "down" then
-		player:burnY(1)
+		player:fireTopThruster();
 	elseif key == "left" then
-		player:burnX(-1)
+		player:fireRightThruster()
 	elseif key == "right" then
-		player:burnX(1)
+		player:fireLeftThruster()
 	elseif key == " " then
 		paused = not paused
 	end
@@ -173,13 +165,13 @@ function GameScene:keyReleased(key)
 	if gameOver then return end
 	
 	if key == "up" then
-		player:stopBottomThruster();
+		player:stopBottomThruster()
 	elseif key == "down" then
-		player:burnY(-1)
+		player:stopTopThruster()
 	elseif key == "left" then
-		player:burnX(1)
+		player:stopRightThruster()
 	elseif key == "right" then
-		player:burnX(-1)
+		player:stopLeftThruster();
 	end
 
 	if key == "1" then

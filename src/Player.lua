@@ -1,17 +1,14 @@
 love.filesystem.load("CollisionMath.lua")()
-love.filesystem.load("Object.lua")()
+love.filesystem.load("SpaceObject.lua")()
+love.filesystem.load("Laser.lua")()
 
 local previousObj = {}
 
-Player = Object:extend({
+local playerLaser = Laser:new()
+
+Player = SpaceObject:extend({
 	x = width / 2,
 	y = height / 2,
-	
-	vx = 0, 
-	vy = 0,
-	maxV = 750,
-	ax = 0, 
-	ay = 0,
 	
 	thrust = 30,
 	throttle = 5,
@@ -23,8 +20,17 @@ Player = Object:extend({
 	burnRate = 1,
 	depletionRate = 5,
 	
-	mass = 1
+	mass = 1,
+	laser = playerLaser
 })
+
+function Player:objectIsInRange(target)
+	return dist2(self, target) < sqr(self.laser.range)
+end
+
+function Player:setTarget(target)
+	self.laser.target = target
+end
 
 function Player:addBurnAcceleration()
 	local totalThrust = self.thrust * self.throttle
@@ -74,13 +80,9 @@ function Player:stopLeftThruster()
 	self:fireRightThruster()
 end
 
-function Player:addVector(ax, ay)
-	self.ax = self.ax + ax
-	self.ay = self.ay + ay
-end
-
-function Player:updatePhys(dt)
-	self:addBurnAcceleration()
+function Player:onStartUpdate()
+	self.ax = 0
+	self.ay = 0
 	
 	self:depleteFuel(dt)
 	
@@ -91,29 +93,19 @@ function Player:updatePhys(dt)
 	if self.yBurn ~= 0 then
 		self:burnFuel(dt)
 	end
-	
-	self.vx = self.vx + (self.ax * dt)
-	self.vy = self.vy + (self.ay * dt)
-	
-	if self.vx > self.maxV then
-		self.vx = self.maxV
-	end
-	
-	if self.vy > self.maxV then
-		self.vy = self.maxV
-	end
-	
-	self.x = (self.x + (self.vx * dt))-- % width
-	self.y = (self.y + (self.vy * dt))-- % height
 end
 
-function Player:onStartUpdate()
-	self.ax = 0
-	self.ay = 0
+function Player:onEndUpdate()
+	if self:objectIsInRange(self.laser.target) then
+		self.laser:startFiring()
+	else
+		self.laser:stopFiring()
+	end
 end
 
 function Player:update(dt)
 	previousObj = deepcopy(self)
+	self:addBurnAcceleration()
 	self:updatePhys(dt)
 end
 
