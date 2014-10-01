@@ -13,7 +13,7 @@ SpaceObject = Object:extend({
 	
 	fuelBonus = 30,
 	
-	mass = 500000,
+	mass = 1000000,
 	
 	vx = 0, 
 	vy = 0,
@@ -22,15 +22,7 @@ SpaceObject = Object:extend({
 	ay = 0,
 })
 
-function SpaceObject:randomLocation()
-	self.x = math.random() * width
-	self.y = (math.random() * (height - (15 + self.r))) + self.r
-end
 
-function SpaceObject:scaleSizeToScore(s)
-	local rOffset = self.rMax - self.rMin
-	self.r = ((rOffset * self.rScaler) / (s + self.rScaler)) + self.rMin
-end
 
 function SpaceObject:addVector(ax, ay)
 	self.ax = self.ax + ax
@@ -49,8 +41,8 @@ function SpaceObject:updatePhys(dt)
 		self.vy = self.maxV
 	end
 	
-	self.x = (self.x + (self.vx * dt)) % width
-	self.y = (self.y + (self.vy * dt)) % height
+	self.x = (self.x + (self.vx * dt))-- % width
+	self.y = (self.y + (self.vy * dt))-- % height
 end
 
 function SpaceObject:applyGravitation(otherObject)

@@ -1,6 +1,6 @@
 love.filesystem.load("Scene.lua")()
 love.filesystem.load("Player.lua")()
-love.filesystem.load("SpaceObject.lua")()
+love.filesystem.load("Asteroid.lua")()
 
 GameScene = Scene:extend({
 })
@@ -21,7 +21,7 @@ local comboCounter = 0
 local burnAnimationDuration = 0.2
 local burnAnimationTime = 0
 
-local theDot = SpaceObject:new()
+local theDot = Asteroid:new()
 
 local function startGame()
 	score = 0
@@ -32,11 +32,14 @@ local function startGame()
 	comboTimer = comboTimerMax
 	comboCounter = 0
 	
-	theDot = SpaceObject:new()
+	theDot = Asteroid:new()
 	theDot:randomLocation()
 	
 	player = Player:new()
 	player:setTarget(theDot)
+	player:setMiningCallback(function (fuelMined)
+		GameScene:setFuelGained("+" .. fuelMined, player.x + 10, player.y - 10)
+	end)
 end
 
 local function drawThrottle()
@@ -84,7 +87,7 @@ end
 function GameScene:update(dt)
 	if paused or gameOver then return end
 	
-	player:onStartUpdate()
+	player:onStartUpdate(dt)
 	
 	self.timedText:update(dt)
 	theDot:applyGravitation(player)
@@ -96,31 +99,48 @@ function GameScene:update(dt)
 	score = score + dt
 	burnAnimationTime = burnAnimationTime + dt
 	
-	player:onEndUpdate()
+	player:onEndUpdate(dt)
 
 	if player:collidesWith(theDot) or math.ceil(player.fuel) == 0 then
 		gameOver = true
 	end
 end
 
-function GameScene:draw()
-	self.timedText:printAll()
+function GameScene:applyTransformations()
 	
-	local r, g, b, a = love.graphics.getColor()
-	local l = player.sideLength
-	local halfL = player.sideLength / 2
+	local distanceX = player.x - theDot.x
+	local distanceY = player.y - theDot.y
 	
-	love.graphics.circle("fill", theDot.x, theDot.y, theDot.r, 15)
-	drawThrottle()
+	local translationX = theDot.x - (width / 2)
+	local translationY = theDot.y - (height / 2)
 	
-	if player.laser.firing then
-		love.graphics.setColor(laserColor.r, laserColor.g, laserColor.b, laserColor.a)
-		love.graphics.line(player.x, player.y, player.laser.target.x, player.laser.target.y)
-		love.graphics.setColor(r,g,b,a)
+	if distanceX > (width / 4) or distanceX < -(width / 4) then
+		local difference = 0
+		if distanceX > 0 then
+			difference = distanceX - (width / 4)
+		else
+			difference = distanceX + (width / 4)
+		end
+		translationX = translationX + difference
+	end
+	if distanceY > (height / 4) or distanceY < -(height / 4) then
+		local difference = 0
+		if distanceY > 0 then
+			difference = distanceY - (height / 4)
+		else
+			difference = distanceY + (height / 4)
+		end
+		translationY = translationY + difference
 	end
 	
-	love.graphics.rectangle("fill", player.x - halfL, player.y - halfL, l, l)
-	drawThrusters()
+	love.graphics.translate(-translationX, -translationY)
+end
+
+function GameScene:drawUI()
+	local r, g, b, a = love.graphics.getColor()
+	love.graphics.origin()
+	
+	drawThrottle()
 
 	love.graphics.setColor(scoreColor.r, scoreColor.g, scoreColor.b, scoreColor.a)
 	love.graphics.printf("Score: " .. math.floor(score), 0, 10, width, "right")
@@ -140,6 +160,29 @@ function GameScene:draw()
 	if gameOver then
 		love.graphics.printf("Game Over\nPress space to restart", 0, (height / 2) - 50, width, "center")
 	end
+end
+
+function GameScene:draw()
+	self:applyTransformations()
+	
+	self.timedText:printAll()
+	
+	local r, g, b, a = love.graphics.getColor()
+	local l = player.sideLength
+	local halfL = player.sideLength / 2
+	
+	love.graphics.circle("fill", theDot.x, theDot.y, theDot.r, 15)
+	
+	if player.laser.firing then
+		love.graphics.setColor(laserColor.r, laserColor.g, laserColor.b, laserColor.a)
+		love.graphics.line(player.x, player.y, player.laser.target.x, player.laser.target.y)
+		love.graphics.setColor(r,g,b,a)
+	end
+	
+	love.graphics.rectangle("fill", player.x - halfL, player.y - halfL, l, l)
+	drawThrusters()
+	
+	self:drawUI()
 end
 
 function GameScene:keyPressed(key, repeats)

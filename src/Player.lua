@@ -80,22 +80,14 @@ function Player:stopLeftThruster()
 	self:fireRightThruster()
 end
 
-function Player:onStartUpdate()
+function Player:onStartUpdate(dt)
 	self.ax = 0
 	self.ay = 0
 	
-	self:depleteFuel(dt)
-	
-	if self.xBurn ~= 0 then
-		self:burnFuel(dt)
-	end
-	
-	if self.yBurn ~= 0 then
-		self:burnFuel(dt)
-	end
+	self:burnFuel(dt)
 end
 
-function Player:onEndUpdate()
+function Player:onEndUpdate(dt)
 	if self:objectIsInRange(self.laser.target) then
 		self.laser:startFiring()
 	else
@@ -107,14 +99,24 @@ function Player:update(dt)
 	previousObj = deepcopy(self)
 	self:addBurnAcceleration()
 	self:updatePhys(dt)
+	self.laser:update(dt)
 end
 
 function Player:burnFuel(dt)
-	-- self.fuel = self.fuel - ((self.burnRate * self.throttle) * dt)
+	if self.yBurn ~= 0 or self.xBurn ~= 0 then
+		self.fuel = self.fuel - ((self.burnRate * self.throttle) * dt)
+	end
+	
+	if self.laser.firing then
+		self.fuel = self.fuel - (self.laser.fuelCost * dt)
+	end
 end
 
-function Player:depleteFuel(dt)
-	-- self.fuel = self.fuel - (self.depletionRate * dt)
+function Player:setMiningCallback(cb)
+	self.laser:setMineCycleCallback(function (fuelMined)
+		self.fuel = self.fuel + fuelMined
+		cb(fuelMined)
+	end)
 end
 
 function Player:addFuel(amount)
