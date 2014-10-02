@@ -30,12 +30,16 @@ function Laser:update(dt)
 		
 		if self.miningTime >= self.miningRate then
 			self.miningTime = 0
-			self.mineCycleCallback(self.miningCapacity)
+			self.mineCycleCallback()
 		end
 	end
 end
 
 function Laser:setMineCycleCallback(cb)
-	self.mineCycleCallback = cb
+	self.mineCycleCallback = function()
+		local amountMined = self.miningCapacity * self.target.resourceDensity
+		self.target.resourceCount = self.target.resourceCount - amountMined
+		cb(amountMined)
+	end
 end
 

@@ -13,7 +13,7 @@ SpaceObject = Object:extend({
 	
 	fuelBonus = 30,
 	
-	mass = 1000000,
+	mass = 0,
 	
 	vx = 0, 
 	vy = 0,
@@ -41,8 +41,8 @@ function SpaceObject:updatePhys(dt)
 		self.vy = self.maxV
 	end
 	
-	self.x = (self.x + (self.vx * dt))-- % width
-	self.y = (self.y + (self.vy * dt))-- % height
+	self.x = (self.x + (self.vx * dt))
+	self.y = (self.y + (self.vy * dt))
 end
 
 function SpaceObject:applyGravitation(otherObject)

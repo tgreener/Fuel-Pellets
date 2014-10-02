@@ -123,23 +123,23 @@ function Player:addFuel(amount)
 	self.fuel = self.fuel + amount
 end
 
-function Player:collidesWith(aDot)
-	local r = sqr(aDot.r)
+function Player:collidesWith(asteroid)
+	local r = sqr(asteroid.r)
 	
 	local corners = self:getCorners()
 	local predictedCorners = previousObj:getCorners()
 	
-	local distToTop = distToSegment2(aDot, corners[0], corners[1])
-	local predDistToTop = distToSegment2(aDot, predictedCorners[0], predictedCorners[1])
+	local distToTop = distToSegment2(asteroid, corners[0], corners[1])
+	local predDistToTop = distToSegment2(asteroid, predictedCorners[0], predictedCorners[1])
 	
-	local distToRight = distToSegment2(aDot, corners[2], corners[1])
-	local predDistToRight = distToSegment2(aDot, predictedCorners[2], predictedCorners[1])
+	local distToRight = distToSegment2(asteroid, corners[2], corners[1])
+	local predDistToRight = distToSegment2(asteroid, predictedCorners[2], predictedCorners[1])
 	
-	local distToBot = distToSegment2(aDot, corners[2], corners[3])
-	local predDistToBot = distToSegment2(aDot, predictedCorners[2], predictedCorners[3])
+	local distToBot = distToSegment2(asteroid, corners[2], corners[3])
+	local predDistToBot = distToSegment2(asteroid, predictedCorners[2], predictedCorners[3])
 	
-	local distToLeft = distToSegment2(aDot, corners[0], corners[3])
-	local predDistToLeft = distToSegment2(aDot, predictedCorners[0], predictedCorners[3])
+	local distToLeft = distToSegment2(asteroid, corners[0], corners[3])
+	local predDistToLeft = distToSegment2(asteroid, predictedCorners[0], predictedCorners[3])
 	
 	local rightT = (r - distToRight) / (predDistToRight - distToRight)
 	local bottomT = (r - distToBot) / (predDistToBot - distToBot)

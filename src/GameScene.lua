@@ -21,7 +21,9 @@ local comboCounter = 0
 local burnAnimationDuration = 0.2
 local burnAnimationTime = 0
 
-local theDot = Asteroid:new()
+local theDot
+local asteroids = {}
+local asteroidCount = 2
 
 local function startGame()
 	score = 0
@@ -32,8 +34,13 @@ local function startGame()
 	comboTimer = comboTimerMax
 	comboCounter = 0
 	
-	theDot = Asteroid:new()
-	theDot:randomLocation()
+	for i = 0, asteroidCount - 1, 1 do
+		asteroids[i] = Asteroid:new()
+		asteroids[i]:randomLocation()
+		asteroids[i]:randomVelocity()
+	end
+	
+	theDot = asteroids[0]
 	
 	player = Player:new()
 	player:setTarget(theDot)
@@ -90,11 +97,21 @@ function GameScene:update(dt)
 	player:onStartUpdate(dt)
 	
 	self.timedText:update(dt)
-	theDot:applyGravitation(player)
-	player:applyGravitation(theDot)
+	
+	for i = 0, asteroidCount - 1, 1 do
+		asteroids[i]:applyGravitation(player)
+		player:applyGravitation(asteroids[i])
+		
+		for j = 0, asteroidCount - 1, 1 do
+			if i ~= j then
+				asteroids[i]:applyGravitation(asteroids[j])
+			end
+		end
+		
+		asteroids[i]:updatePhys(dt)
+	end
 	
 	player:update(dt)
-	theDot:updatePhys(dt)
 	
 	score = score + dt
 	burnAnimationTime = burnAnimationTime + dt
@@ -171,7 +188,9 @@ function GameScene:draw()
 	local l = player.sideLength
 	local halfL = player.sideLength / 2
 	
-	love.graphics.circle("fill", theDot.x, theDot.y, theDot.r, 15)
+	for i = 0, asteroidCount - 1, 1 do
+		love.graphics.circle("fill", asteroids[i].x, asteroids[i].y, asteroids[i].r, 15)
+	end
 	
 	if player.laser.firing then
 		love.graphics.setColor(laserColor.r, laserColor.g, laserColor.b, laserColor.a)
