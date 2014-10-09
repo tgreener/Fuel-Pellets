@@ -20,7 +20,7 @@ Player = SpaceObject:extend({
 	burnRate = 1,
 	depletionRate = 5,
 	
-	mass = 1,
+	mass = 10,
 	laser = playerLaser
 })
 
@@ -29,7 +29,27 @@ function Player:objectIsInRange(target)
 end
 
 function Player:setTarget(target)
-	self.laser.target = target
+	if target ~= nil then
+		self.laser.target = target
+	end
+end
+
+function Player:targetNearest(asteroids)
+	local count = table.getn(asteroids)
+	
+	local closestAsteroid
+	local distanceToClosest = math.huge
+	
+	for i = 0, count, 1 do
+		local distanceToAsteroid = dist2(self, asteroids[i])
+		
+		if distanceToAsteroid < distanceToClosest and asteroids[i].resourceCount > 0 then
+			closestAsteroid = asteroids[i]
+			distanceToClosest = distanceToAsteroid
+		end
+	end
+	
+	self:setTarget(closestAsteroid)
 end
 
 function Player:addBurnAcceleration()
@@ -146,10 +166,15 @@ function Player:collidesWith(asteroid)
 	local leftT = (r - distToLeft) / (predDistToLeft - distToLeft)
 	local topT  = (r - distToTop) / (predDistToTop - distToTop)
 	
-	local collidesTop = topT < 1 and topT > 0
-	local collidesRight = rightT < 1 and rightT > 0
-	local collidesBottom = bottomT < 1 and bottomT > 0
-	local collidesLeft = leftT < 1 and leftT > 0
+	-- local collidesTop = topT < 1 and topT > 0
+	-- local collidesRight = rightT < 1 and rightT > 0
+	-- local collidesBottom = bottomT < 1 and bottomT > 0
+	-- local collidesLeft = leftT < 1 and leftT > 0
+	
+	local collidesTop = distToTop < r
+	local collidesRight = distToRight < r
+	local collidesBottom = distToBot < r
+	local collidesLeft = distToLeft < r
 	
 	return collidesTop or collidesRight or collidesBottom or collidesLeft
 end

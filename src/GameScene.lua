@@ -8,24 +8,47 @@ GameScene = Scene:extend({
 local fuelColor = {r = 50, g = 255, b = 50, a = 255}
 local scoreColor = {r = 255, g = 255, b = 50, a = 255}
 local laserColor = {r = 255, g = 50, b = 50, a = 255}
+local depletedColor = {r = 156, g = 136, b = 100, a = 255}
 local timedTextTime = 0.4
+
+local FIELD_SIZE = 10000
+
+local asteroidField = { xMax = FIELD_SIZE, yMax = FIELD_SIZE, xMin = 0, yMin = 0 }
+local numFields = 0
 
 local player = 0
 local gameOver = false
 local paused = true
 
-local comboTimerMax = 4.3
-local comboTimer = comboTimerMax
-local comboCounter = 0
-
 local burnAnimationDuration = 0.2
 local burnAnimationTime = 0
 
-local theDot
 local asteroids = {}
-local asteroidCount = 2
+local asteroidCount = 3
+
+local function moreAsteroids()
+	asteroidField.xMax = asteroidField.xMax + (FIELD_SIZE * numFields)
+	asteroidField.yMax = asteroidField.yMax + (FIELD_SIZE * numFields)
+	
+	asteroidField.xMin = asteroidField.xMin + (FIELD_SIZE * numFields)
+	asteroidField.yMin = asteroidField.yMin + (FIELD_SIZE * numFields)
+	
+	local index = numFields * asteroidCount
+	
+	for i = index, index + asteroidCount - 1, 1 do
+		asteroids[i] = Asteroid:new()
+		asteroids[i]:randomLocation(asteroidField, asteroids)
+		asteroids[i].tag = i
+	end
+	
+	numFields = numFields + 1
+end
 
 local function startGame()
+	numFields = 0
+	asteroidField = { xMax = 1000, yMax = 1000, xMin = 0, yMin = 0 }
+	asteroids = {}
+	
 	score = 0
 	gameOver = false
 	paused = true
@@ -34,24 +57,29 @@ local function startGame()
 	comboTimer = comboTimerMax
 	comboCounter = 0
 	
-	for i = 0, asteroidCount - 1, 1 do
-		asteroids[i] = Asteroid:new()
-		asteroids[i]:randomLocation()
-		asteroids[i]:randomVelocity()
-	end
-	
-	theDot = asteroids[0]
+	moreAsteroids()
 	
 	player = Player:new()
-	player:setTarget(theDot)
+	player:targetNearest(asteroids)
 	player:setMiningCallback(function (fuelMined)
 		GameScene:setFuelGained("+" .. fuelMined, player.x + 10, player.y - 10)
+		
+		local target = player.laser.target
+		local needMoreAsteroids = true
+		
+		for i = 0, table.getn(asteroids), 1 do
+			needMoreAsteroids = needMoreAsteroids and asteroids[i].resourceCount <= 0
+		end
+		
+		if needMoreAsteroids then
+			moreAsteroids()
+		end
 	end)
 end
 
 local function drawThrottle()
 	local throttleBot = height / 4
-	local throttleHeight = 30
+	local throttleHeight = 10
 	local throttleSteps = 10
 	
 	love.graphics.setColor(255, 50, 50, 255)
@@ -95,41 +123,41 @@ function GameScene:update(dt)
 	if paused or gameOver then return end
 	
 	player:onStartUpdate(dt)
-	
-	self.timedText:update(dt)
-	
-	for i = 0, asteroidCount - 1, 1 do
+
+	for i = 0, table.getn(asteroids), 1 do
+		asteroids[i]:onStartUpdate(dt)
+	end
+
+	for i = 0, table.getn(asteroids), 1 do
 		asteroids[i]:applyGravitation(player)
 		player:applyGravitation(asteroids[i])
-		
-		for j = 0, asteroidCount - 1, 1 do
-			if i ~= j then
-				asteroids[i]:applyGravitation(asteroids[j])
-			end
-		end
-		
-		asteroids[i]:updatePhys(dt)
 	end
 	
 	player:update(dt)
+	self.timedText:update(dt)
 	
 	score = score + dt
 	burnAnimationTime = burnAnimationTime + dt
 	
 	player:onEndUpdate(dt)
 
-	if player:collidesWith(theDot) or math.ceil(player.fuel) == 0 then
-		gameOver = true
+	local playerCollides = false
+	for i = 0, asteroidCount - 1, 1 do
+		playerCollides = playerCollides or player:collidesWith(asteroids[i])
 	end
+	
+	gameOver = playerCollides or math.ceil(player.fuel) == 0
 end
 
 function GameScene:applyTransformations()
 	
-	local distanceX = player.x - theDot.x
-	local distanceY = player.y - theDot.y
+	local target = player.laser.target
 	
-	local translationX = theDot.x - (width / 2)
-	local translationY = theDot.y - (height / 2)
+	local distanceX = player.x - target.x
+	local distanceY = player.y - target.y
+	
+	local translationX = target.x - (width / 2)
+	local translationY = target.y - (height / 2)
 	
 	if distanceX > (width / 4) or distanceX < -(width / 4) then
 		local difference = 0
@@ -166,9 +194,6 @@ function GameScene:drawUI()
 	love.graphics.printf("Fuel: " .. math.abs(math.ceil(player.fuel)), 0, 10, width, "center")
 
 	love.graphics.setColor(r, g, b, a)
-	love.graphics.print("Combo: " .. comboCounter, 10, 10)
-
-	love.graphics.rectangle("fill", 10, height - 15, (width - 10) * (comboTimer / comboTimerMax), 10)
 
 	if paused then
 		love.graphics.printf("Paused\nPress space to continue", 0, (height / 2) - 50, width, "center")
@@ -188,8 +213,13 @@ function GameScene:draw()
 	local l = player.sideLength
 	local halfL = player.sideLength / 2
 	
-	for i = 0, asteroidCount - 1, 1 do
+	for i = 0, table.getn(asteroids), 1 do
+		if asteroids[i].resourceCount <= 0 then
+			love.graphics.setColor(depletedColor.r, depletedColor.g, depletedColor.b, depletedColor.a)
+		end
+		
 		love.graphics.circle("fill", asteroids[i].x, asteroids[i].y, asteroids[i].r, 15)
+		love.graphics.setColor(r,g,b,a)
 	end
 	
 	if player.laser.firing then
@@ -220,6 +250,8 @@ function GameScene:keyPressed(key, repeats)
 		player:fireLeftThruster()
 	elseif key == " " then
 		paused = not paused
+	elseif key == "tab" then
+		player:targetNearest(asteroids)
 	end
 end
 

@@ -37,8 +37,12 @@ end
 
 function Laser:setMineCycleCallback(cb)
 	self.mineCycleCallback = function()
-		local amountMined = self.miningCapacity * self.target.resourceDensity
-		self.target.resourceCount = self.target.resourceCount - amountMined
+		local amountMined = 0
+		if self.target.resourceCount > 0 then
+			amountMined =  self.miningCapacity * self.target.resourceDensity
+			self.target.resourceCount = self.target.resourceCount - amountMined
+		end
+		
 		cb(amountMined)
 	end
 end

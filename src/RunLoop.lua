@@ -3,8 +3,7 @@ function love.run()
 	local maxFPS = 120
 	
     if love.math then
-    	love.math.setRandomSeed(os.time())
-        for i=1,3 do love.math.random() end
+    	math.randomseed(os.time())
     end
 
     if love.event then
