@@ -3,11 +3,11 @@ love.filesystem.load("SpaceObject.lua")()
 love.filesystem.load("CollisionMath.lua")()
 
 Asteroid = SpaceObject:extend({
-	r = 20,
+	r = 15,
 	
 	mass = 2500000,
 	resourceDensity = 2,
-	resourceCount = 150
+	resourceCount = 50
 })
 
 function Asteroid:randomLocation(field, otherAsteroids)

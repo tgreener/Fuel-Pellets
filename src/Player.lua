@@ -10,7 +10,7 @@ Player = SpaceObject:extend({
 	x = width / 2,
 	y = height / 2,
 	
-	thrust = 30,
+	thrust = 20,
 	throttle = 5,
 	sideLength = 10,
 	
